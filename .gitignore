@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+# IntelliJ
+.idea/
+*.iml
+out/
+# Java / Maven / Gradle
+target/
+build/
+.gradle/
+# Node / React
+node_modules/
+dist/
+.env
+.env.local
+# Logs
+*.log
+# Secrets
+application-local.yml
