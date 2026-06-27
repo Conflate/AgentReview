@@ -1,5 +1,6 @@
 package com.agentreview.session;
 
+import com.agentreview.audit.AuditLogService;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.repository.RepositoryProfile;
 import com.agentreview.repository.RepositoryProfileRepository;
@@ -14,13 +15,16 @@ public class AgentSessionService {
 
 	private final AgentSessionRepository agentSessionRepository;
 	private final RepositoryProfileRepository repositoryProfileRepository;
+	private final AuditLogService auditLogService;
 
 	public AgentSessionService(
 			AgentSessionRepository agentSessionRepository,
-			RepositoryProfileRepository repositoryProfileRepository
+			RepositoryProfileRepository repositoryProfileRepository,
+			AuditLogService auditLogService
 	) {
 		this.agentSessionRepository = agentSessionRepository;
 		this.repositoryProfileRepository = repositoryProfileRepository;
+		this.auditLogService = auditLogService;
 	}
 
 	@Transactional
@@ -35,7 +39,9 @@ public class AgentSessionService {
 				request.branchName().trim(),
 				normalizeOptionalText(request.summary())
 		);
-		return AgentSessionResponse.from(agentSessionRepository.save(session));
+		AgentSession savedSession = agentSessionRepository.save(session);
+		auditLogService.recordSessionCreated(savedSession);
+		return AgentSessionResponse.from(savedSession);
 	}
 
 	@Transactional(readOnly = true)

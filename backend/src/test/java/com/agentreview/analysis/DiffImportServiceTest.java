@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.agentreview.analysis.dto.DiffImportRequest;
+import com.agentreview.audit.AuditLogService;
 import com.agentreview.common.AgentTool;
 import com.agentreview.common.FileChangeType;
 import com.agentreview.common.ResourceNotFoundException;
@@ -32,6 +33,9 @@ class DiffImportServiceTest {
 
 	@Mock
 	private DiffParserService diffParserService;
+
+	@Mock
+	private AuditLogService auditLogService;
 
 	@InjectMocks
 	private DiffImportService diffImportService;
@@ -65,6 +69,7 @@ class DiffImportServiceTest {
 		ArgumentCaptor<List<ChangedFile>> captor = ArgumentCaptor.forClass(List.class);
 		verify(changedFileRepository).deleteBySessionId(1L);
 		verify(changedFileRepository).saveAll(captor.capture());
+		verify(auditLogService).recordDiffImported(session, 1);
 		assertThat(captor.getValue()).hasSize(1);
 		assertThat(captor.getValue().get(0).getSession()).isEqualTo(session);
 		assertThat(captor.getValue().get(0).getFilePath()).isEqualTo("src/main/java/App.java");

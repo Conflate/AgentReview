@@ -1,5 +1,6 @@
 package com.agentreview.event;
 
+import com.agentreview.audit.AuditLogService;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.event.dto.AgentEventImportRequest;
 import com.agentreview.event.dto.AgentEventImportResponse;
@@ -16,13 +17,16 @@ public class AgentEventImportService {
 
 	private final AgentSessionRepository agentSessionRepository;
 	private final AgentEventRepository agentEventRepository;
+	private final AuditLogService auditLogService;
 
 	public AgentEventImportService(
 			AgentSessionRepository agentSessionRepository,
-			AgentEventRepository agentEventRepository
+			AgentEventRepository agentEventRepository,
+			AuditLogService auditLogService
 	) {
 		this.agentSessionRepository = agentSessionRepository;
 		this.agentEventRepository = agentEventRepository;
+		this.auditLogService = auditLogService;
 	}
 
 	@Transactional
@@ -35,6 +39,7 @@ public class AgentEventImportService {
 		List<AgentEventResponse> importedEvents = agentEventRepository.saveAll(events).stream()
 				.map(AgentEventResponse::from)
 				.toList();
+		auditLogService.recordEventsImported(session, importedEvents.size());
 		return new AgentEventImportResponse(sessionId, importedEvents.size(), importedEvents);
 	}
 

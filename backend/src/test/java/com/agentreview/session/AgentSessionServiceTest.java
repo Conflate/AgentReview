@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.agentreview.audit.AuditLogService;
 import com.agentreview.common.AgentTool;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.common.RiskLevel;
@@ -29,6 +30,9 @@ class AgentSessionServiceTest {
 
 	@Mock
 	private RepositoryProfileRepository repositoryProfileRepository;
+
+	@Mock
+	private AuditLogService auditLogService;
 
 	@InjectMocks
 	private AgentSessionService agentSessionService;
@@ -55,6 +59,7 @@ class AgentSessionServiceTest {
 		ArgumentCaptor<AgentSession> captor = ArgumentCaptor.forClass(AgentSession.class);
 		verify(agentSessionRepository).save(captor.capture());
 		AgentSession savedSession = captor.getValue();
+		verify(auditLogService).recordSessionCreated(savedSession);
 		assertThat(savedSession.getSessionExternalId()).isEqualTo("codex-run-123");
 		assertThat(savedSession.getDeveloper()).isEqualTo("David");
 		assertThat(savedSession.getBranchName()).isEqualTo("feature/repository-profiles");

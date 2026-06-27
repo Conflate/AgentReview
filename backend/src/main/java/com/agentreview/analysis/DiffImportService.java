@@ -4,6 +4,7 @@ import com.agentreview.analysis.dto.ChangedFileResponse;
 import com.agentreview.analysis.dto.DiffImportRequest;
 import com.agentreview.analysis.dto.DiffImportResponse;
 import com.agentreview.analysis.dto.ParsedChangedFile;
+import com.agentreview.audit.AuditLogService;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.session.AgentSession;
 import com.agentreview.session.AgentSessionRepository;
@@ -17,15 +18,18 @@ public class DiffImportService {
 	private final AgentSessionRepository agentSessionRepository;
 	private final ChangedFileRepository changedFileRepository;
 	private final DiffParserService diffParserService;
+	private final AuditLogService auditLogService;
 
 	public DiffImportService(
 			AgentSessionRepository agentSessionRepository,
 			ChangedFileRepository changedFileRepository,
-			DiffParserService diffParserService
+			DiffParserService diffParserService,
+			AuditLogService auditLogService
 	) {
 		this.agentSessionRepository = agentSessionRepository;
 		this.changedFileRepository = changedFileRepository;
 		this.diffParserService = diffParserService;
+		this.auditLogService = auditLogService;
 	}
 
 	@Transactional
@@ -39,6 +43,7 @@ public class DiffImportService {
 		List<ChangedFileResponse> savedFiles = changedFileRepository.saveAll(changedFiles).stream()
 				.map(ChangedFileResponse::from)
 				.toList();
+		auditLogService.recordDiffImported(session, savedFiles.size());
 		return new DiffImportResponse(sessionId, savedFiles.size(), savedFiles);
 	}
 

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.agentreview.analysis.dto.TestOutputImportRequest;
+import com.agentreview.audit.AuditLogService;
 import com.agentreview.common.AgentTool;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.common.TestStatus;
@@ -31,6 +32,9 @@ class TestOutputImportServiceTest {
 
 	@Mock
 	private TestOutputParserService testOutputParserService;
+
+	@Mock
+	private AuditLogService auditLogService;
 
 	@InjectMocks
 	private TestOutputImportService testOutputImportService;
@@ -64,6 +68,7 @@ class TestOutputImportServiceTest {
 		ArgumentCaptor<TestEvidence> captor = ArgumentCaptor.forClass(TestEvidence.class);
 		verify(testEvidenceRepository).deleteBySessionId(1L);
 		verify(testEvidenceRepository).save(captor.capture());
+		verify(auditLogService).recordTestOutputImported(session, TestStatus.PASSED);
 		assertThat(captor.getValue().getSession()).isEqualTo(session);
 		assertThat(captor.getValue().getTestCommand()).isEqualTo("./mvnw test");
 		assertThat(captor.getValue().getStatus()).isEqualTo(TestStatus.PASSED);

@@ -2,6 +2,7 @@ package com.agentreview.analysis;
 
 import com.agentreview.analysis.dto.TestOutputImportRequest;
 import com.agentreview.analysis.dto.TestOutputImportResponse;
+import com.agentreview.audit.AuditLogService;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.common.TestStatus;
 import com.agentreview.session.AgentSession;
@@ -15,15 +16,18 @@ public class TestOutputImportService {
 	private final AgentSessionRepository agentSessionRepository;
 	private final TestEvidenceRepository testEvidenceRepository;
 	private final TestOutputParserService testOutputParserService;
+	private final AuditLogService auditLogService;
 
 	public TestOutputImportService(
 			AgentSessionRepository agentSessionRepository,
 			TestEvidenceRepository testEvidenceRepository,
-			TestOutputParserService testOutputParserService
+			TestOutputParserService testOutputParserService,
+			AuditLogService auditLogService
 	) {
 		this.agentSessionRepository = agentSessionRepository;
 		this.testEvidenceRepository = testEvidenceRepository;
 		this.testOutputParserService = testOutputParserService;
+		this.auditLogService = auditLogService;
 	}
 
 	@Transactional
@@ -39,6 +43,7 @@ public class TestOutputImportService {
 				outputText,
 				status
 		));
+		auditLogService.recordTestOutputImported(session, evidence.getStatus());
 		return TestOutputImportResponse.from(evidence);
 	}
 

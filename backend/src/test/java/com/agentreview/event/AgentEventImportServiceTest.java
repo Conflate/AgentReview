@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.agentreview.audit.AuditLogService;
 import com.agentreview.common.AgentTool;
 import com.agentreview.common.EventType;
 import com.agentreview.common.ResourceNotFoundException;
@@ -31,6 +32,9 @@ class AgentEventImportServiceTest {
 
 	@Mock
 	private AgentEventRepository agentEventRepository;
+
+	@Mock
+	private AuditLogService auditLogService;
 
 	@InjectMocks
 	private AgentEventImportService agentEventImportService;
@@ -70,6 +74,7 @@ class AgentEventImportServiceTest {
 
 		ArgumentCaptor<List<AgentEvent>> captor = ArgumentCaptor.forClass(List.class);
 		verify(agentEventRepository).saveAll(captor.capture());
+		verify(auditLogService).recordEventsImported(session, 1);
 		List<AgentEvent> savedEvents = captor.getValue();
 		assertThat(savedEvents).hasSize(1);
 		assertThat(savedEvents.get(0).getSession()).isEqualTo(session);
