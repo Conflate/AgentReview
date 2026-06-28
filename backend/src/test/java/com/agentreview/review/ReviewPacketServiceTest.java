@@ -115,6 +115,10 @@ class ReviewPacketServiceTest {
 				.contains("# AgentReview Packet")
 				.contains("Risk level: HIGH")
 				.contains("[HIGH] Protected path changed: src/main/java/App.java")
+				.contains("## Review Checklist")
+				.contains("Manually inspect protected-path behavior and ownership.")
+				.contains("Confirm the submitted test command is relevant to the changed area.")
+				.contains("Assign a human reviewer for the flagged areas before merge.")
 				.contains("MODIFIED: src/main/java/App.java")
 				.contains("Command: ./mvnw test")
 				.contains("RUN_COMMAND: ./mvnw test");
@@ -140,6 +144,44 @@ class ReviewPacketServiceTest {
 	}
 
 	@Test
+	void findAllReturnsReviewPacketsNewestFirstFromRepository() {
+		AgentSession session = session();
+		ReviewPacket packet = new ReviewPacket(
+				session,
+				RiskLevel.HIGH,
+				MergeReadiness.REVIEW_REQUIRED,
+				"# High Packet"
+		);
+		packet.setId(4L);
+		when(reviewPacketRepository.findAllByOrderByGeneratedAtDesc()).thenReturn(List.of(packet));
+
+		var responses = reviewPacketService.findAll();
+
+		assertThat(responses).hasSize(1);
+		assertThat(responses.get(0).id()).isEqualTo(4L);
+		assertThat(responses.get(0).packetMarkdown()).isEqualTo("# High Packet");
+	}
+
+	@Test
+	void findByIdReturnsStoredPacket() {
+		AgentSession session = session();
+		ReviewPacket packet = new ReviewPacket(
+				session,
+				RiskLevel.HIGH,
+				MergeReadiness.REVIEW_REQUIRED,
+				"# High Packet"
+		);
+		packet.setId(4L);
+		when(reviewPacketRepository.findById(4L)).thenReturn(Optional.of(packet));
+
+		var response = reviewPacketService.findById(4L);
+
+		assertThat(response.id()).isEqualTo(4L);
+		assertThat(response.sessionId()).isEqualTo(1L);
+		assertThat(response.riskLevel()).isEqualTo(RiskLevel.HIGH);
+	}
+
+	@Test
 	void generateThrowsWhenSessionDoesNotExist() {
 		when(agentSessionRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -155,6 +197,15 @@ class ReviewPacketServiceTest {
 		assertThatThrownBy(() -> reviewPacketService.getLatest(99L))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Review packet not found for session: 99");
+	}
+
+	@Test
+	void findByIdThrowsWhenPacketDoesNotExist() {
+		when(reviewPacketRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> reviewPacketService.findById(99L))
+				.isInstanceOf(ResourceNotFoundException.class)
+				.hasMessage("Review packet not found: 99");
 	}
 
 	private AgentSession session() {

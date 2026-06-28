@@ -8,14 +8,19 @@ import com.agentreview.analysis.TestEvidenceRepository;
 import com.agentreview.analysis.dto.PolicyFlagResponse;
 import com.agentreview.analysis.dto.RiskAnalysisResponse;
 import com.agentreview.audit.AuditLogService;
+import com.agentreview.common.MergeReadiness;
 import com.agentreview.common.ResourceNotFoundException;
+import com.agentreview.common.TestStatus;
 import com.agentreview.event.AgentEvent;
 import com.agentreview.event.AgentEventRepository;
 import com.agentreview.review.dto.ReviewPacketResponse;
 import com.agentreview.session.AgentSession;
 import com.agentreview.session.AgentSessionRepository;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +81,20 @@ public class ReviewPacketService {
 		return ReviewPacketResponse.from(packet);
 	}
 
+	@Transactional(readOnly = true)
+	public List<ReviewPacketResponse> findAll() {
+		return reviewPacketRepository.findAllByOrderByGeneratedAtDesc().stream()
+				.map(ReviewPacketResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public ReviewPacketResponse findById(Long id) {
+		ReviewPacket packet = reviewPacketRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Review packet not found: " + id));
+		return ReviewPacketResponse.from(packet);
+	}
+
 	private String buildMarkdown(
 			AgentSession session,
 			RiskAnalysisResponse riskAnalysis,
@@ -109,7 +128,14 @@ public class ReviewPacketService {
 						.append("] ")
 						.append(normalize(flag.message()))
 						.append("\n");
-			}
+				}
+		}
+
+		markdown.append("\n## Review Checklist\n");
+		for (String checklistItem : buildChecklist(riskAnalysis, changedFiles, testEvidence)) {
+			markdown.append("- ")
+					.append(checklistItem)
+					.append("\n");
 		}
 
 		markdown.append("\n## Changed Files\n");
@@ -152,6 +178,61 @@ public class ReviewPacketService {
 		}
 
 		return markdown.toString();
+	}
+
+	private List<String> buildChecklist(
+			RiskAnalysisResponse riskAnalysis,
+			List<ChangedFile> changedFiles,
+			Optional<TestEvidence> testEvidence
+	) {
+		Set<String> checklist = new LinkedHashSet<>();
+		checklist.add("Confirm the packet evidence matches the pull request diff.");
+		for (PolicyFlagResponse flag : riskAnalysis.policyFlags()) {
+			addChecklistItemForFlag(checklist, flag.message());
+		}
+		if (changedFiles.isEmpty()) {
+			checklist.add("Import or verify the git diff before approving.");
+		}
+		testEvidence.ifPresent(evidence -> {
+			if (evidence.getStatus() == TestStatus.PASSED) {
+				checklist.add("Confirm the submitted test command is relevant to the changed area.");
+			}
+		});
+		if (riskAnalysis.mergeReadiness() == MergeReadiness.BLOCKED) {
+			checklist.add("Do not merge until critical flags are resolved.");
+		}
+		else if (riskAnalysis.mergeReadiness() == MergeReadiness.REVIEW_REQUIRED) {
+			checklist.add("Assign a human reviewer for the flagged areas before merge.");
+		}
+		else {
+			checklist.add("Spot-check changed files and test evidence before approval.");
+		}
+		return new ArrayList<>(checklist);
+	}
+
+	private void addChecklistItemForFlag(Set<String> checklist, String message) {
+		if (message.startsWith("Protected path changed:")) {
+			checklist.add("Manually inspect protected-path behavior and ownership.");
+		}
+		else if (message.startsWith("CI or workflow file changed:")) {
+			checklist.add("Review CI/CD changes for secret handling and deployment impact.");
+		}
+		else if (message.startsWith("Dependency manifest changed:")) {
+			checklist.add("Confirm dependency changes are intentional and safe.");
+		}
+		else if (message.startsWith("Source file deleted:")) {
+			checklist.add("Confirm deleted source files are unused or replaced.");
+		}
+		else if (message.startsWith("Restricted command used:")) {
+			checklist.add("Investigate restricted command usage before approval.");
+		}
+		else if (message.equals("Submitted tests failed")) {
+			checklist.add("Require passing tests or a documented failure rationale before merge.");
+		}
+		else if (message.equals("No test output submitted for this session")
+				|| message.equals("Submitted test output did not prove tests passed")) {
+			checklist.add("Request relevant test evidence or an explicit testing rationale.");
+		}
 	}
 
 	private void appendLine(StringBuilder markdown, String label, Object value) {
