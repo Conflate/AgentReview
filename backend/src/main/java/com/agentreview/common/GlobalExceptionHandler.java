@@ -26,6 +26,19 @@ public class GlobalExceptionHandler {
 		));
 	}
 
+	@ExceptionHandler(InvalidRequestException.class)
+	public ResponseEntity<ApiError> handleInvalidRequest(InvalidRequestException exception, HttpServletRequest request) {
+		HttpStatus status = HttpStatus.BAD_REQUEST;
+		return ResponseEntity.status(status).body(new ApiError(
+				Instant.now(),
+				status.value(),
+				status.getReasonPhrase(),
+				exception.getMessage(),
+				request.getRequestURI(),
+				null
+		));
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException exception, HttpServletRequest request) {
 		HttpStatus status = HttpStatus.BAD_REQUEST;

@@ -35,9 +35,9 @@ class RepositoryProfileServiceTest {
 			return profile;
 		});
 		CreateRepositoryProfileRequest request = new CreateRepositoryProfileRequest(
-				" payments-api ",
+				" warehouse-api ",
 				RiskLevel.HIGH,
-				List.of(" src/main/java/**/payment/** "),
+				List.of(" src/main/java/**/inventory/** "),
 				List.of(" rm -rf "),
 				RiskLevel.MEDIUM
 		);
@@ -47,8 +47,8 @@ class RepositoryProfileServiceTest {
 		ArgumentCaptor<RepositoryProfile> captor = ArgumentCaptor.forClass(RepositoryProfile.class);
 		verify(repositoryProfileRepository).save(captor.capture());
 		RepositoryProfile savedProfile = captor.getValue();
-		assertThat(savedProfile.getRepoName()).isEqualTo("payments-api");
-		assertThat(savedProfile.getProtectedPathPatterns()).containsExactly("src/main/java/**/payment/**");
+		assertThat(savedProfile.getRepoName()).isEqualTo("warehouse-api");
+		assertThat(savedProfile.getProtectedPathPatterns()).containsExactly("src/main/java/**/inventory/**");
 		assertThat(savedProfile.getRestrictedCommandPatterns()).containsExactly("rm -rf");
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.approvalRequiredAt()).isEqualTo(RiskLevel.MEDIUM);
@@ -57,9 +57,9 @@ class RepositoryProfileServiceTest {
 	@Test
 	void findAllReturnsProfiles() {
 		RepositoryProfile profile = new RepositoryProfile(
-				"payments-api",
+				"warehouse-api",
 				RiskLevel.HIGH,
-				List.of("src/main/java/**/payment/**"),
+				List.of("src/main/java/**/inventory/**"),
 				List.of("rm -rf"),
 				RiskLevel.MEDIUM
 		);
@@ -69,7 +69,7 @@ class RepositoryProfileServiceTest {
 		var responses = repositoryProfileService.findAll();
 
 		assertThat(responses).hasSize(1);
-		assertThat(responses.get(0).repoName()).isEqualTo("payments-api");
+		assertThat(responses.get(0).repoName()).isEqualTo("warehouse-api");
 	}
 
 	@Test

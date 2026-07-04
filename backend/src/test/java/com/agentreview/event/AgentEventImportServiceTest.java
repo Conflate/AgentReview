@@ -92,9 +92,9 @@ class AgentEventImportServiceTest {
 		AgentEventImportRequest request = new AgentEventImportRequest(List.of(
 				new ImportAgentEventRequest(
 						EventType.EDIT_FILE,
-						"src/main/java/com/app/refunds/RefundValidator.java",
+						"src/main/java/com/app/inventory/InventoryReservationService.java",
 						null,
-						"Edited refund validation logic",
+						"Edited inventory reservation logic",
 						Instant.parse("2026-06-01T20:00:00Z")
 				)
 		));

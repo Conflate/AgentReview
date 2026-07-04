@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.agentreview.audit.AuditLogService;
 import com.agentreview.common.AgentTool;
+import com.agentreview.common.InvalidRequestException;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.common.RiskLevel;
 import com.agentreview.repository.RepositoryProfile;
@@ -70,7 +71,7 @@ class AgentSessionServiceTest {
 	}
 
 	@Test
-	void createLinksRepositoryProfileWhenProvided() {
+	void createLinksRepositoryProfileAndUsesCanonicalRepoNameWhenProvided() {
 		RepositoryProfile profile = new RepositoryProfile(
 				"agentreview",
 				RiskLevel.MEDIUM,
@@ -89,7 +90,7 @@ class AgentSessionServiceTest {
 				"codex-run-123",
 				AgentTool.CODEX,
 				"David",
-				"agentreview",
+				" AGENTREVIEW ",
 				10L,
 				"main",
 				null
@@ -100,6 +101,8 @@ class AgentSessionServiceTest {
 		ArgumentCaptor<AgentSession> captor = ArgumentCaptor.forClass(AgentSession.class);
 		verify(agentSessionRepository).save(captor.capture());
 		assertThat(captor.getValue().getRepositoryProfile()).isEqualTo(profile);
+		assertThat(captor.getValue().getRepoName()).isEqualTo("agentreview");
+		assertThat(response.repoName()).isEqualTo("agentreview");
 		assertThat(response.repositoryProfileId()).isEqualTo(10L);
 	}
 
@@ -119,6 +122,32 @@ class AgentSessionServiceTest {
 		assertThatThrownBy(() -> agentSessionService.create(request))
 				.isInstanceOf(ResourceNotFoundException.class)
 				.hasMessage("Repository profile not found: 99");
+	}
+
+	@Test
+	void createThrowsWhenRepoNameDoesNotMatchRepositoryProfile() {
+		RepositoryProfile profile = new RepositoryProfile(
+				"agentreview",
+				RiskLevel.MEDIUM,
+				List.of("src/main/java/**"),
+				List.of("rm -rf"),
+				RiskLevel.MEDIUM
+		);
+		profile.setId(10L);
+		when(repositoryProfileRepository.findById(10L)).thenReturn(Optional.of(profile));
+		CreateAgentSessionRequest request = new CreateAgentSessionRequest(
+				"codex-run-123",
+				AgentTool.CODEX,
+				"David",
+				"warehouse-api",
+				10L,
+				"main",
+				null
+		);
+
+		assertThatThrownBy(() -> agentSessionService.create(request))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessage("Session repository must match repository profile: agentreview");
 	}
 
 	@Test

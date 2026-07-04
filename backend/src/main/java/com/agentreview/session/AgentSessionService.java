@@ -1,6 +1,7 @@
 package com.agentreview.session;
 
 import com.agentreview.audit.AuditLogService;
+import com.agentreview.common.InvalidRequestException;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.repository.RepositoryProfile;
 import com.agentreview.repository.RepositoryProfileRepository;
@@ -30,11 +31,12 @@ public class AgentSessionService {
 	@Transactional
 	public AgentSessionResponse create(CreateAgentSessionRequest request) {
 		RepositoryProfile repositoryProfile = findRepositoryProfile(request.repositoryProfileId());
+		String repoName = resolveRepoName(request.repoName(), repositoryProfile);
 		AgentSession session = new AgentSession(
 				request.sessionExternalId().trim(),
 				request.agentTool(),
 				request.developer().trim(),
-				request.repoName().trim(),
+				repoName,
 				repositoryProfile,
 				request.branchName().trim(),
 				normalizeOptionalText(request.summary())
@@ -63,6 +65,19 @@ public class AgentSessionService {
 			return null;
 		}
 		return value.trim();
+	}
+
+	private String resolveRepoName(String requestedRepoName, RepositoryProfile repositoryProfile) {
+		String normalizedRepoName = requestedRepoName.trim();
+		if (repositoryProfile == null) {
+			return normalizedRepoName;
+		}
+		if (!normalizedRepoName.equalsIgnoreCase(repositoryProfile.getRepoName())) {
+			throw new InvalidRequestException(
+					"Session repository must match repository profile: " + repositoryProfile.getRepoName()
+			);
+		}
+		return repositoryProfile.getRepoName();
 	}
 
 	private RepositoryProfile findRepositoryProfile(Long repositoryProfileId) {
