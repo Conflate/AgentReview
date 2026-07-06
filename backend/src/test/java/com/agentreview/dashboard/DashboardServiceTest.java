@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.agentreview.analysis.PolicyFlag;
 import com.agentreview.analysis.PolicyFlagRepository;
+import com.agentreview.analysis.PolicyFlagType;
 import com.agentreview.common.AgentTool;
 import com.agentreview.common.MergeReadiness;
 import com.agentreview.common.RiskLevel;
@@ -44,9 +45,9 @@ class DashboardServiceTest {
 		when(agentSessionRepository.findAll()).thenReturn(List.of(codexSession, cursorSession));
 		when(reviewPacketRepository.findAll()).thenReturn(List.of(lowPacket, highPacket, criticalPacket));
 		when(policyFlagRepository.findAll()).thenReturn(List.of(
-				flag(codexSession, RiskLevel.HIGH, "Protected path changed: src/main/java/Auth.java"),
-				flag(cursorSession, RiskLevel.HIGH, "Protected path changed: src/main/java/Auth.java"),
-				flag(cursorSession, RiskLevel.CRITICAL, "Tests failed")
+				flag(codexSession, PolicyFlagType.PROTECTED_PATH_CHANGED, RiskLevel.HIGH, "Protected path changed: src/main/java/Auth.java"),
+				flag(cursorSession, PolicyFlagType.PROTECTED_PATH_CHANGED, RiskLevel.HIGH, "Protected path changed: src/main/java/AdminAuth.java"),
+				flag(cursorSession, PolicyFlagType.TESTS_FAILED, RiskLevel.CRITICAL, "Submitted tests failed")
 		));
 
 		var response = dashboardService.getDashboard();
@@ -62,10 +63,11 @@ class DashboardServiceTest {
 		assertThat(response.packetsByRisk()).containsEntry(RiskLevel.HIGH, 1L);
 		assertThat(response.packetsByRisk()).containsEntry(RiskLevel.CRITICAL, 1L);
 		assertThat(response.topPolicyFlags()).hasSize(2);
-		assertThat(response.topPolicyFlags().get(0).message())
-				.isEqualTo("Protected path changed: src/main/java/Auth.java");
+		assertThat(response.topPolicyFlags().get(0).type()).isEqualTo(PolicyFlagType.PROTECTED_PATH_CHANGED);
+		assertThat(response.topPolicyFlags().get(0).message()).isEqualTo("Protected path changed");
 		assertThat(response.topPolicyFlags().get(0).count()).isEqualTo(2);
-		assertThat(response.topPolicyFlags().get(1).message()).isEqualTo("Tests failed");
+		assertThat(response.topPolicyFlags().get(1).type()).isEqualTo(PolicyFlagType.TESTS_FAILED);
+		assertThat(response.topPolicyFlags().get(1).message()).isEqualTo("Submitted tests failed");
 		assertThat(response.topPolicyFlags().get(1).count()).isEqualTo(1);
 	}
 
@@ -103,7 +105,7 @@ class DashboardServiceTest {
 		return new ReviewPacket(session, riskLevel, mergeReadiness, "# Packet");
 	}
 
-	private PolicyFlag flag(AgentSession session, RiskLevel riskLevel, String message) {
-		return new PolicyFlag(session, riskLevel, message);
+	private PolicyFlag flag(AgentSession session, PolicyFlagType type, RiskLevel riskLevel, String message) {
+		return new PolicyFlag(session, type, riskLevel, message);
 	}
 }

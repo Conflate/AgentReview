@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.agentreview.analysis.ChangedFile;
 import com.agentreview.analysis.ChangedFileRepository;
+import com.agentreview.analysis.PolicyFlagType;
 import com.agentreview.analysis.RiskAnalysisService;
 import com.agentreview.analysis.TestEvidence;
 import com.agentreview.analysis.TestEvidenceRepository;
@@ -86,6 +87,7 @@ class ReviewPacketServiceTest {
 				MergeReadiness.REVIEW_REQUIRED,
 				List.of(new PolicyFlagResponse(
 						1L,
+						PolicyFlagType.PROTECTED_PATH_CHANGED,
 						RiskLevel.HIGH,
 						"Protected path changed: src/main/java/App.java",
 						Instant.parse("2026-06-26T10:16:30Z")

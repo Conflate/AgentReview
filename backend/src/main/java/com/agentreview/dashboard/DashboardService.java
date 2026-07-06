@@ -2,6 +2,7 @@ package com.agentreview.dashboard;
 
 import com.agentreview.analysis.PolicyFlag;
 import com.agentreview.analysis.PolicyFlagRepository;
+import com.agentreview.analysis.PolicyFlagType;
 import com.agentreview.common.AgentTool;
 import com.agentreview.common.MergeReadiness;
 import com.agentreview.common.RiskLevel;
@@ -91,19 +92,19 @@ public class DashboardService {
 	}
 
 	private List<PolicyFlagCountResponse> countTopPolicyFlags(List<PolicyFlag> policyFlags) {
-		Map<String, Long> countsByMessage = policyFlags.stream()
+		Map<PolicyFlagType, Long> countsByType = policyFlags.stream()
 				.collect(Collectors.groupingBy(
-						PolicyFlag::getMessage,
+						PolicyFlag::getType,
 						LinkedHashMap::new,
 						Collectors.counting()
 				));
-		return countsByMessage.entrySet().stream()
+		return countsByType.entrySet().stream()
 				.sorted(Comparator
-						.<Map.Entry<String, Long>>comparingLong(Map.Entry::getValue)
+						.<Map.Entry<PolicyFlagType, Long>>comparingLong(Map.Entry::getValue)
 						.reversed()
 						.thenComparing(Map.Entry::getKey))
 				.limit(TOP_POLICY_FLAG_LIMIT)
-				.map(entry -> new PolicyFlagCountResponse(entry.getKey(), entry.getValue()))
+				.map(entry -> new PolicyFlagCountResponse(entry.getKey(), entry.getKey().getDisplayName(), entry.getValue()))
 				.toList();
 	}
 }

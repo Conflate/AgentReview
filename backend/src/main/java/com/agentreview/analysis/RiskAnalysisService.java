@@ -112,6 +112,7 @@ public class RiskAnalysisService {
 			if (matchesAnyPath(filePath, protectedPathPatterns)) {
 				flags.add(new PolicyFlag(
 						session,
+						PolicyFlagType.PROTECTED_PATH_CHANGED,
 						RiskLevel.HIGH,
 						"Protected path changed: " + filePath
 				));
@@ -119,6 +120,7 @@ public class RiskAnalysisService {
 			if (matchesAnyPath(filePath, CI_PATH_PATTERNS)) {
 				flags.add(new PolicyFlag(
 						session,
+						PolicyFlagType.CI_WORKFLOW_CHANGED,
 						RiskLevel.HIGH,
 						"CI or workflow file changed: " + filePath
 				));
@@ -126,6 +128,7 @@ public class RiskAnalysisService {
 			if (matchesAnyPath(filePath, DEPENDENCY_MANIFEST_PATTERNS)) {
 				flags.add(new PolicyFlag(
 						session,
+						PolicyFlagType.DEPENDENCY_MANIFEST_CHANGED,
 						RiskLevel.MEDIUM,
 						"Dependency manifest changed: " + filePath
 				));
@@ -133,6 +136,7 @@ public class RiskAnalysisService {
 			if (changedFile.getChangeType() == FileChangeType.DELETED && isSourceFile(filePath)) {
 				flags.add(new PolicyFlag(
 						session,
+						PolicyFlagType.SOURCE_FILE_DELETED,
 						RiskLevel.HIGH,
 						"Source file deleted: " + filePath
 				));
@@ -152,6 +156,7 @@ public class RiskAnalysisService {
 			if (command != null && matchesAnyText(command, restrictedCommandPatterns)) {
 				flags.add(new PolicyFlag(
 						session,
+						PolicyFlagType.RESTRICTED_COMMAND_USED,
 						RiskLevel.CRITICAL,
 						"Restricted command used: " + command
 				));
@@ -171,6 +176,7 @@ public class RiskAnalysisService {
 			}
 			flags.add(new PolicyFlag(
 					session,
+					PolicyFlagType.NO_TEST_OUTPUT,
 					RiskLevel.MEDIUM,
 					"No test output submitted for this session"
 			));
@@ -180,6 +186,7 @@ public class RiskAnalysisService {
 		if (status == TestStatus.FAILED) {
 			flags.add(new PolicyFlag(
 					session,
+					PolicyFlagType.TESTS_FAILED,
 					RiskLevel.CRITICAL,
 					"Submitted tests failed"
 			));
@@ -187,6 +194,7 @@ public class RiskAnalysisService {
 		else if (status == TestStatus.NOT_RUN || status == TestStatus.UNKNOWN) {
 			flags.add(new PolicyFlag(
 					session,
+					PolicyFlagType.TEST_OUTPUT_INCONCLUSIVE,
 					RiskLevel.MEDIUM,
 					"Submitted test output did not prove tests passed"
 			));

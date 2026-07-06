@@ -2,6 +2,7 @@ package com.agentreview.review;
 
 import com.agentreview.analysis.ChangedFile;
 import com.agentreview.analysis.ChangedFileRepository;
+import com.agentreview.analysis.PolicyFlagType;
 import com.agentreview.analysis.RiskAnalysisService;
 import com.agentreview.analysis.TestEvidence;
 import com.agentreview.analysis.TestEvidenceRepository;
@@ -188,7 +189,7 @@ public class ReviewPacketService {
 		Set<String> checklist = new LinkedHashSet<>();
 		checklist.add("Confirm the packet evidence matches the pull request diff.");
 		for (PolicyFlagResponse flag : riskAnalysis.policyFlags()) {
-			addChecklistItemForFlag(checklist, flag.message());
+			addChecklistItemForFlag(checklist, flag.type());
 		}
 		if (changedFiles.isEmpty()) {
 			checklist.add("Import or verify the git diff before approving.");
@@ -210,28 +211,15 @@ public class ReviewPacketService {
 		return new ArrayList<>(checklist);
 	}
 
-	private void addChecklistItemForFlag(Set<String> checklist, String message) {
-		if (message.startsWith("Protected path changed:")) {
-			checklist.add("Manually inspect protected-path behavior and ownership.");
-		}
-		else if (message.startsWith("CI or workflow file changed:")) {
-			checklist.add("Review CI/CD changes for secret handling and deployment impact.");
-		}
-		else if (message.startsWith("Dependency manifest changed:")) {
-			checklist.add("Confirm dependency changes are intentional and safe.");
-		}
-		else if (message.startsWith("Source file deleted:")) {
-			checklist.add("Confirm deleted source files are unused or replaced.");
-		}
-		else if (message.startsWith("Restricted command used:")) {
-			checklist.add("Investigate restricted command usage before approval.");
-		}
-		else if (message.equals("Submitted tests failed")) {
-			checklist.add("Require passing tests or a documented failure rationale before merge.");
-		}
-		else if (message.equals("No test output submitted for this session")
-				|| message.equals("Submitted test output did not prove tests passed")) {
-			checklist.add("Request relevant test evidence or an explicit testing rationale.");
+	private void addChecklistItemForFlag(Set<String> checklist, PolicyFlagType type) {
+		switch (type) {
+			case PROTECTED_PATH_CHANGED -> checklist.add("Manually inspect protected-path behavior and ownership.");
+			case CI_WORKFLOW_CHANGED -> checklist.add("Review CI/CD changes for secret handling and deployment impact.");
+			case DEPENDENCY_MANIFEST_CHANGED -> checklist.add("Confirm dependency changes are intentional and safe.");
+			case SOURCE_FILE_DELETED -> checklist.add("Confirm deleted source files are unused or replaced.");
+			case RESTRICTED_COMMAND_USED -> checklist.add("Investigate restricted command usage before approval.");
+			case TESTS_FAILED -> checklist.add("Require passing tests or a documented failure rationale before merge.");
+			case NO_TEST_OUTPUT, TEST_OUTPUT_INCONCLUSIVE -> checklist.add("Request relevant test evidence or an explicit testing rationale.");
 		}
 	}
 

@@ -30,6 +30,10 @@ public class PolicyFlag {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
+	private PolicyFlagType type;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
 	private RiskLevel riskLevel;
 
 	@Column(nullable = false, length = 2000)
@@ -41,8 +45,9 @@ public class PolicyFlag {
 	protected PolicyFlag() {
 	}
 
-	public PolicyFlag(AgentSession session, RiskLevel riskLevel, String message) {
+	public PolicyFlag(AgentSession session, PolicyFlagType type, RiskLevel riskLevel, String message) {
 		this.session = session;
+		this.type = type;
 		this.riskLevel = riskLevel;
 		this.message = message;
 	}
@@ -64,6 +69,10 @@ public class PolicyFlag {
 
 	public AgentSession getSession() {
 		return session;
+	}
+
+	public PolicyFlagType getType() {
+		return type;
 	}
 
 	public RiskLevel getRiskLevel() {
