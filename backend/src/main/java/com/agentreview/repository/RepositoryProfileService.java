@@ -1,5 +1,6 @@
 package com.agentreview.repository;
 
+import com.agentreview.common.InvalidRequestException;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.repository.dto.CreateRepositoryProfileRequest;
 import com.agentreview.repository.dto.RepositoryProfileResponse;
@@ -18,8 +19,12 @@ public class RepositoryProfileService {
 
 	@Transactional
 	public RepositoryProfileResponse create(CreateRepositoryProfileRequest request) {
+		String repoName = request.repoName().trim();
+		if (repositoryProfileRepository.existsByRepoNameIgnoreCase(repoName)) {
+			throw new InvalidRequestException("Repository profile already exists for repo: " + repoName);
+		}
 		RepositoryProfile profile = new RepositoryProfile(
-				request.repoName().trim(),
+				repoName,
 				request.businessCriticality(),
 				normalizePatterns(request.protectedPathPatterns()),
 				normalizePatterns(request.restrictedCommandPatterns()),

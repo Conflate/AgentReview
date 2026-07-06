@@ -3,9 +3,11 @@ package com.agentreview.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.agentreview.common.InvalidRequestException;
 import com.agentreview.common.ResourceNotFoundException;
 import com.agentreview.common.RiskLevel;
 import com.agentreview.repository.dto.CreateRepositoryProfileRequest;
@@ -52,6 +54,23 @@ class RepositoryProfileServiceTest {
 		assertThat(savedProfile.getRestrictedCommandPatterns()).containsExactly("rm -rf");
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.approvalRequiredAt()).isEqualTo(RiskLevel.MEDIUM);
+	}
+
+	@Test
+	void createRejectsDuplicateRepoNameIgnoringCase() {
+		when(repositoryProfileRepository.existsByRepoNameIgnoreCase("Warehouse-API")).thenReturn(true);
+		CreateRepositoryProfileRequest request = new CreateRepositoryProfileRequest(
+				" Warehouse-API ",
+				RiskLevel.HIGH,
+				List.of("src/main/java/**/inventory/**"),
+				List.of("rm -rf"),
+				RiskLevel.MEDIUM
+		);
+
+		assertThatThrownBy(() -> repositoryProfileService.create(request))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessage("Repository profile already exists for repo: Warehouse-API");
+		verify(repositoryProfileRepository, never()).save(any(RepositoryProfile.class));
 	}
 
 	@Test
