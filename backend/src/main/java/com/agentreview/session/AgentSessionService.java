@@ -32,8 +32,17 @@ public class AgentSessionService {
 	public AgentSessionResponse create(CreateAgentSessionRequest request) {
 		RepositoryProfile repositoryProfile = findRepositoryProfile(request.repositoryProfileId());
 		String repoName = resolveRepoName(request.repoName(), repositoryProfile);
+		String sessionExternalId = request.sessionExternalId().trim();
+		if (agentSessionRepository.existsByAgentToolAndSessionExternalId(request.agentTool(), sessionExternalId)) {
+			throw new InvalidRequestException(
+					"Agent session already exists for tool and external id: "
+							+ request.agentTool()
+							+ "/"
+							+ sessionExternalId
+			);
+		}
 		AgentSession session = new AgentSession(
-				request.sessionExternalId().trim(),
+				sessionExternalId,
 				request.agentTool(),
 				request.developer().trim(),
 				repoName,

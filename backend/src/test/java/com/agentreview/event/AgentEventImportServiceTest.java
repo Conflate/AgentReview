@@ -41,7 +41,7 @@ class AgentEventImportServiceTest {
 
 	@Test
 	@SuppressWarnings("unchecked")
-	void importEventsSavesEventsForSession() {
+	void importEventsReplacesEventsForSession() {
 		AgentSession session = new AgentSession(
 				"codex-run-001",
 				AgentTool.CODEX,
@@ -73,6 +73,7 @@ class AgentEventImportServiceTest {
 		var response = agentEventImportService.importEvents(1L, request);
 
 		ArgumentCaptor<List<AgentEvent>> captor = ArgumentCaptor.forClass(List.class);
+		verify(agentEventRepository).deleteBySessionId(1L);
 		verify(agentEventRepository).saveAll(captor.capture());
 		verify(auditLogService).recordEventsImported(session, 1);
 		List<AgentEvent> savedEvents = captor.getValue();

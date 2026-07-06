@@ -3,6 +3,7 @@ package com.agentreview.session;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -68,6 +69,27 @@ class AgentSessionServiceTest {
 		assertThat(response.id()).isEqualTo(1L);
 		assertThat(response.agentTool()).isEqualTo(AgentTool.CODEX);
 		assertThat(response.repositoryProfileId()).isNull();
+	}
+
+	@Test
+	void createThrowsWhenToolAndExternalIdAlreadyExist() {
+		when(agentSessionRepository.existsByAgentToolAndSessionExternalId(AgentTool.CODEX, "codex-run-123"))
+				.thenReturn(true);
+		CreateAgentSessionRequest request = new CreateAgentSessionRequest(
+				" codex-run-123 ",
+				AgentTool.CODEX,
+				"David",
+				"agentreview",
+				null,
+				"main",
+				null
+		);
+
+		assertThatThrownBy(() -> agentSessionService.create(request))
+				.isInstanceOf(InvalidRequestException.class)
+				.hasMessage("Agent session already exists for tool and external id: CODEX/codex-run-123");
+		verify(agentSessionRepository, never()).save(any(AgentSession.class));
+		verify(auditLogService, never()).recordSessionCreated(any(AgentSession.class));
 	}
 
 	@Test

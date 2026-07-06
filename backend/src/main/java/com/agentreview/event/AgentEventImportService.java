@@ -36,6 +36,7 @@ public class AgentEventImportService {
 		List<AgentEvent> events = request.events().stream()
 				.map(event -> toEntity(session, event))
 				.toList();
+		agentEventRepository.deleteBySessionId(sessionId);
 		List<AgentEventResponse> importedEvents = agentEventRepository.saveAll(events).stream()
 				.map(AgentEventResponse::from)
 				.toList();

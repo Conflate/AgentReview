@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AgentEventRepository extends JpaRepository<AgentEvent, Long> {
 
 	List<AgentEvent> findBySessionIdOrderByEventTimestampAsc(Long sessionId);
+
+	void deleteBySessionId(Long sessionId);
 }

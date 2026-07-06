@@ -14,21 +14,28 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 
 @Entity
-@Table(name = "agent_sessions")
+@Table(
+		name = "agent_sessions",
+		uniqueConstraints = @UniqueConstraint(
+				name = "uk_agent_sessions_tool_external_id",
+				columnNames = {"agent_tool", "session_external_id"}
+		)
+)
 public class AgentSession {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false)
+	@Column(name = "session_external_id", nullable = false)
 	private String sessionExternalId;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(name = "agent_tool", nullable = false)
 	private AgentTool agentTool;
 
 	@Column(nullable = false)
