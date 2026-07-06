@@ -9,6 +9,4 @@ public interface ReviewPacketRepository extends JpaRepository<ReviewPacket, Long
 	List<ReviewPacket> findAllByOrderByGeneratedAtDesc();
 
 	Optional<ReviewPacket> findFirstBySessionIdOrderByGeneratedAtDesc(Long sessionId);
-
-	void deleteBySessionId(Long sessionId);
 }

@@ -64,7 +64,7 @@ class ReviewPacketServiceTest {
 	private ReviewPacketService reviewPacketService;
 
 	@Test
-	void generateStoresLatestReviewPacketWithEvidenceSummary() {
+	void generateStoresNewReviewPacketWithEvidenceSummary() {
 		AgentSession session = session();
 		ChangedFile changedFile = new ChangedFile(session, "src/main/java/App.java", FileChangeType.MODIFIED);
 		AgentEvent event = new AgentEvent(
@@ -107,7 +107,6 @@ class ReviewPacketServiceTest {
 		var response = reviewPacketService.generate(1L);
 
 		ArgumentCaptor<ReviewPacket> captor = ArgumentCaptor.forClass(ReviewPacket.class);
-		verify(reviewPacketRepository).deleteBySessionId(1L);
 		verify(reviewPacketRepository).save(captor.capture());
 		verify(auditLogService).recordReviewPacketGenerated(session, 7L);
 		assertThat(response.id()).isEqualTo(7L);

@@ -64,7 +64,6 @@ public class ReviewPacketService {
 		Optional<TestEvidence> testEvidence = testEvidenceRepository.findBySessionId(sessionId);
 		String packetMarkdown = buildMarkdown(session, riskAnalysis, changedFiles, events, testEvidence);
 
-		reviewPacketRepository.deleteBySessionId(sessionId);
 		ReviewPacket packet = reviewPacketRepository.save(new ReviewPacket(
 				session,
 				riskAnalysis.riskLevel(),
